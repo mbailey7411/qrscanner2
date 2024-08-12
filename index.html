@@ -134,6 +134,7 @@
         .item-content {
             white-space: pre-wrap;
             word-break: break-word;
+            line-height: 1.5; /* Single line spacing */
         }
 
         .remove-button {
@@ -320,13 +321,57 @@
                 updateVendorSectionVisibility();
             };
 
-            // Append content and button to the list item
             li.appendChild(itemContent);
             li.appendChild(removeButton);
 
-            // Append the list item to the audit list
-            inventoryList.appendChild(li);
-            inventorySection.style.display = 'block';
+            if (itemDetails.CUSTOMER.includes('Return')) {
+                let vendor = itemDetails.SUPPLIER;
+                if (!vendorSections[vendor]) {
+                    createVendorSection(vendor);
+                }
+                vendorSections[vendor].list.appendChild(li);
+                vendorSections[vendor].section.style.display = 'block';
+            } else {
+                inventoryList.appendChild(li);
+                inventorySection.style.display = 'block';
+            }
+        }
+
+        function createVendorSection(vendor) {
+            const section = document.createElement('div');
+            section.id = `${vendor}Section`;
+            section.className = 'vendor-section';
+
+            const h2 = document.createElement('h2');
+            h2.textContent = `${vendor} Returns`;
+            section.appendChild(h2);
+
+            const list = document.createElement('ul');
+            list.id = `${vendor}List`;
+            list.className = 'vendor-list';
+            section.appendChild(list);
+
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'vendor-button-container';
+
+            const emailButton = document.createElement('button');
+            emailButton.id = `${vendor}EmailButton`;
+            emailButton.className = 'vendor-button email-button';
+            emailButton.textContent = `Email ${vendor} Returns`;
+            emailButton.onclick = () => emailVendorReturns(vendor);
+            buttonContainer.appendChild(emailButton);
+
+            const smsButton = document.createElement('button');
+            smsButton.id = `${vendor}SmsButton`;
+            smsButton.className = 'vendor-button sms-button';
+            smsButton.textContent = `SMS ${vendor} Returns`;
+            smsButton.onclick = () => smsVendorReturns(vendor);
+            buttonContainer.appendChild(smsButton);
+
+            section.appendChild(buttonContainer);
+            document.body.appendChild(section);
+
+            vendorSections[vendor] = { section, list, emailButton, smsButton };
         }
 
         function parseQRContent(content) {
