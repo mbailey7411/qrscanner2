@@ -9,7 +9,183 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <style>
-        /* Existing styles */
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #ecf0f1;
+            --text-color: #34495e;
+            --vendor-pgw: #e74c3c;
+            --vendor-pilkington: #f39c12;
+            --vendor-mygrant: #9b59b6;
+            --vendor-other: #1abc9c;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .header img {
+            max-height: 50px;
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin: 0;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        #qr-reader {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #stopButton, #startButton {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        #emailReportButton {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .email-button {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .sms-button {
+            background-color: var(--secondary-color);
+            color: white;
+            margin-left: auto;
+        }
+
+        .inventory-section, .vendor-section {
+            width: 100%;
+            max-width: 500px;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: rgba(52, 152, 219, 0.1);
+            border-radius: 5px;
+        }
+
+        #inventorySection {
+            display: none;
+        }
+
+        #inventoryList, .vendor-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #inventoryList li, .vendor-list li {
+            background-color: white;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .item-content {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .remove-button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .vendor-button-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+            animation: fadeInOut 2s ease-in-out;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            10%, 90% { opacity: 1; }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            h1, h2 {
+                font-size: 24px;
+            }
+
+            button {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+
+            #qr-reader {
+                max-width: 300px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -36,36 +212,105 @@
     <div id="notification">Item Scanned!</div>
 
     <script>
-        // Existing code...
+        const html5QrCode = new Html5Qrcode("qr-reader");
+        const qrConfig = { fps: 10, qrbox: { width: 250, height: 250 } };
+        let scanning = false;
+
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const emailReportButton = document.getElementById('emailReportButton');
+        const inventoryEmailButton = document.getElementById('inventoryEmailButton');
+        const inventorySmsButton = document.getElementById('inventorySmsButton');
+        const inventoryList = document.getElementById('inventoryList');
+        const notification = document.getElementById('notification');
+        const inventorySection = document.getElementById('inventorySection');
+
+        const scannedItems = new Set();
+        let audioContext;
+        const vendorSections = {};
+        const vendorContacts = {
+            'PGW': { email: 'RGrier@pgwautoglass.com', sms: '8645057843' },
+            'Pilkington': { email: ['marco.yeargin@nsg.com', 'Caleb.ford@nsg.com'], sms: ['8643039699', '8642010487'] },
+            'Mygrant': { email: 'poliver@mygrantglass.com', sms: '7045176639' }
+        };
+
+        stopButton.addEventListener('click', stopScanning);
+        startButton.addEventListener('click', startScanning);
+        emailReportButton.addEventListener('click', sendEmailReport);
+        inventoryEmailButton.addEventListener('click', sendInventoryEmailReport);
+        inventorySmsButton.addEventListener('click', sendInventorySmsReport);
+
+        window.addEventListener('load', initScanner);
+
+        function initScanner() {
+            startScanning();
+            document.addEventListener('click', initAudio, { once: true });
+        }
+
+        function startScanning() {
+            if (!scanning) {
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    qrConfig,
+                    onScanSuccess,
+                    onScanError
+                ).then(() => {
+                    scanning = true;
+                    stopButton.disabled = false;
+                    startButton.disabled = true;
+                }).catch(err => {
+                    console.error('Error starting scanner:', err);
+                });
+            }
+        }
+
+        function stopScanning() {
+            if (scanning) {
+                html5QrCode.stop().then(() => {
+                    scanning = false;
+                    stopButton.disabled = true;
+                    startButton.disabled = false;
+                }).catch(err => console.error('Error stopping scanner:', err));
+            }
+        }
+
+        function onScanSuccess(decodedText) {
+            console.log('Scanned item:', decodedText);
+            if (!scannedItems.has(decodedText)) {
+                scannedItems.add(decodedText);
+                addItemToList(decodedText);
+                playBeep();
+                showNotification();
+            } else {
+                console.log('Item already scanned:', decodedText);
+            }
+        }
+
+        function onScanError(error) {
+            console.warn(`QR error: ${error}`);
+        }
 
         function addItemToList(item) {
-            const itemObject = parseItem(item); // Parse the QR code content into an object
+            // Parse the QR content
+            const itemDetails = parseQRContent(item);
 
+            // Create a new list item element
             const li = document.createElement('li');
-            const itemContent = document.createElement('div');
+
+            // Create the content to be displayed based on parsed QR content
+            const content = `
+                <strong>Customer:</strong> ${itemDetails.CUSTOMER || 'N/A'}<br>
+                <strong>Part:</strong> ${itemDetails.PART || 'N/A'}<br>
+                <strong>Supplier:</strong> ${itemDetails.SUPPLIER || 'N/A'}<br>
+                <strong>Order:</strong> ${itemDetails.ORDER || 'N/A'}<br>
+                <strong>Labeled:</strong> ${itemDetails.LABELED || 'N/A'}
+            `;
+
+            const itemContent = document.createElement('span');
             itemContent.className = 'item-content';
+            itemContent.innerHTML = content;
 
-            // Create elements for each property and append them
-            const customerDiv = document.createElement('div');
-            customerDiv.textContent = `Customer: ${itemObject.CUSTOMER}`;
-            itemContent.appendChild(customerDiv);
-
-            const partDiv = document.createElement('div');
-            partDiv.textContent = `Part: ${itemObject.PART}`;
-            itemContent.appendChild(partDiv);
-
-            const supplierDiv = document.createElement('div');
-            supplierDiv.textContent = `Supplier: ${itemObject.SUPPLIER}`;
-            itemContent.appendChild(supplierDiv);
-
-            const orderDiv = document.createElement('div');
-            orderDiv.textContent = `Order: ${itemObject.ORDER}`;
-            itemContent.appendChild(orderDiv);
-
-            const labeledDiv = document.createElement('div');
-            labeledDiv.textContent = `Labeled: ${itemObject.LABELED}`;
-            itemContent.appendChild(labeledDiv);
-
+            // Add a remove button
             const removeButton = document.createElement('button');
             removeButton.textContent = 'Remove';
             removeButton.className = 'remove-button';
@@ -75,24 +320,133 @@
                 updateVendorSectionVisibility();
             };
 
+            // Append content and button to the list item
             li.appendChild(itemContent);
             li.appendChild(removeButton);
 
-            inventoryList.appendChild(li); // Append to the Audit Items list
+            // Append the list item to the audit list
+            inventoryList.appendChild(li);
             inventorySection.style.display = 'block';
         }
 
-        function parseItem(item) {
-            const fields = item.split(';');
-            const itemObject = {};
-            fields.forEach(field => {
-                const [key, value] = field.split('=');
-                itemObject[key.trim()] = value ? value.trim() : '';
+        function parseQRContent(content) {
+            const details = {};
+            content.split(';').forEach(pair => {
+                const [key, value] = pair.split('=');
+                details[key.trim()] = value ? value.trim() : '';
             });
-            return itemObject;
+            return details;
         }
 
-        // Existing code...
+        function updateVendorSectionVisibility() {
+            inventorySection.style.display =
+                inventoryList.children.length > 0 ? 'block' : 'none';
+
+            for (const vendor in vendorSections) {
+                vendorSections[vendor].section.style.display =
+                    vendorSections[vendor].list.children.length > 0 ? 'block' : 'none';
+            }
+        }
+
+        function sendEmailReport() {
+            let report = 'Audit Items:\n\n'; // Updated label
+            report += Array.from(inventoryList.children)
+                .map(li => li.querySelector('.item-content').textContent)
+                .join('\n\n');
+        
+            for (const vendor in vendorSections) {
+                if (vendorSections[vendor].list.children.length > 0) {
+                    report += `\n\n${vendor} Returns:\n\n`;
+                    report += Array.from(vendorSections[vendor].list.children)
+                        .map(li => li.querySelector('.item-content').textContent)
+                        .join('\n\n');
+            }
+        }
+
+    const subject = encodeURIComponent('Scan Report');
+    const body = encodeURIComponent(`${report}\n\n20/20 Auto Glass`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+
+        function sendInventoryEmailReport() {
+            const items = Array.from(inventoryList.children)
+                .map(li => li.querySelector('.item-content').textContent);
+
+            const report = `Audit Items:\n\n${items.join('\n\n')}\n\n20/20 Auto Glass`; // Updated label
+
+            const subject = encodeURIComponent('Audit Report'); // Updated label
+            const body = encodeURIComponent(report);
+            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        }
+
+        function sendInventorySmsReport() {
+            const items = Array.from(inventoryList.children)
+                .map(li => li.querySelector('.item-content').textContent);
+
+            const report = `Audit Items:\n\n${items.join('\n\n')}\n\n20/20 Auto Glass`; // Updated label
+
+            window.location.href = `sms:?body=${encodeURIComponent(report)}`;
+        }
+
+        function emailVendorReturns(vendor) {
+            const items = Array.from(vendorSections[vendor].list.children)
+                .map(li => li.querySelector('.item-content').textContent);
+
+            const report = `These items are labeled and ready to be picked up in our return area:\n\n${items.join('\n\n')}\n\n20/20 Auto Glass`;
+
+            const subject = encodeURIComponent(`${vendor} Returns`);
+            const body = encodeURIComponent(report);
+            let email = vendorContacts[vendor]?.email || '';
+            let ccEmail = '';
+
+            if (Array.isArray(email)) {
+                ccEmail = `&cc=${encodeURIComponent(email[1])}`;
+                email = email[0];
+            }
+
+            window.location.href = `mailto:${email}?subject=${subject}&body=${body}${ccEmail}`;
+        }
+
+        function smsVendorReturns(vendor) {
+            const items = Array.from(vendorSections[vendor].list.children)
+                .map(li => li.querySelector('.item-content').textContent);
+
+            const report = `These items are labeled and ready to be picked up in our return area:\n\n${items.join('\n\n')}\n\n20/20 Auto Glass`;
+
+            const smsNumbers = vendorContacts[vendor]?.sms || '';
+            const smsNumberList = Array.isArray(smsNumbers) ? smsNumbers.join(',') : smsNumbers;
+
+            window.location.href = `sms:${smsNumberList}?body=${encodeURIComponent(report)}`;
+        }
+
+        function initAudio() {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playBeep() {
+            if (!audioContext) initAudio();
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        function showNotification() {
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 2000);
+        }
     </script>
 </body>
 </html>
