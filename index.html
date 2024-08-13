@@ -367,10 +367,18 @@
 
             const li = document.createElement('li');
             const itemContent = document.createElement('span');
+            li.appendChild(itemContent);
 
             if (isReturn) {
                 itemContent.className = 'return-item-content';
                 itemContent.innerHTML = item.replace(/\n/g, '<br>'); // Preserve line breaks
+
+                const vendor = extractVendorFromReturnItem(item);
+                if (vendor && !vendorSections[vendor]) {
+                    createVendorSection(vendor);
+                }
+                vendorSections[vendor].list.appendChild(li);
+                vendorSections[vendor].section.style.display = 'block';
             } else {
                 itemContent.className = 'item-content';
                 const itemDetails = parseQRContent(item);
@@ -381,7 +389,6 @@
                     <strong>Order:</strong> ${itemDetails.ORDER || 'N/A'}<br>
                     <strong>Labeled:</strong> ${itemDetails.LABELED || 'N/A'}
                 `;
-                li.appendChild(itemContent);
                 inventoryList.appendChild(li);
                 inventorySection.style.display = 'block';
                 showModal(li); // Show modal for location input
@@ -397,15 +404,6 @@
             };
 
             li.appendChild(removeButton);
-
-            if (isReturn) {
-                const vendor = extractVendorFromReturnItem(item);
-                if (vendor && !vendorSections[vendor]) {
-                    createVendorSection(vendor);
-                }
-                vendorSections[vendor].list.appendChild(li);
-                vendorSections[vendor].section.style.display = 'block';
-            }
         }
 
         function showModal(li) {
