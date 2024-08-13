@@ -493,14 +493,14 @@
         function sendEmailReport() {
             let report = 'Audit Items:\n\n';
             report += Array.from(inventoryList.children)
-                .map(li => li.querySelector('.item-content').textContent)
+                .map(li => li.querySelector('.item-content').textContent.trim())
                 .join('\n\n');
         
             for (const vendor in vendorSections) {
                 if (vendorSections[vendor].list.children.length > 0) {
                     report += `\n\n${vendor} Returns:\n\n`;
                     report += Array.from(vendorSections[vendor].list.children)
-                        .map(li => li.querySelector('.item-content').textContent)
+                        .map(li => li.querySelector('.return-item-content').textContent.trim())
                         .join('\n\n');
             }
         }
@@ -513,7 +513,7 @@
 
         function sendInventoryEmailReport() {
             const items = Array.from(inventoryList.children)
-                .map(li => li.querySelector('.item-content').textContent);
+                .map(li => li.querySelector('.item-content').textContent.trim());
 
             const report = `Audit Items:\n\n${items.join('\n\n')}\n\n20/20 Auto Glass`;
 
@@ -524,16 +524,16 @@
 
         function sendInventorySmsReport() {
             const items = Array.from(inventoryList.children)
-                .map(li => li.querySelector('.item-content').textContent);
+                .map(li => li.querySelector('.item-content').textContent.trim());
 
-            const report = `Audit Items:\n\n${items.join('\n\n')}\n\n20/20 Auto Glass`;
+            const report = `Audit Items:\n\n${items.join('\n')}\n\n20/20 Auto Glass`;
 
             window.location.href = `sms:?body=${encodeURIComponent(report)}`;
         }
 
         function emailVendorReturns(vendor) {
             const items = Array.from(vendorSections[vendor].list.children)
-                .map(li => li.querySelector('.item-content').textContent);
+                .map(li => li.querySelector('.return-item-content').textContent.trim());
 
             const report = `These items are labeled and ready to be picked up in our return area:\n\n${items.join('\n\n')}\n\n20/20 Auto Glass`;
 
@@ -552,9 +552,9 @@
 
         function smsVendorReturns(vendor) {
             const items = Array.from(vendorSections[vendor].list.children)
-                .map(li => li.querySelector('.item-content').textContent);
+                .map(li => li.querySelector('.return-item-content').textContent.trim());
 
-            const report = `These items are labeled and ready to be picked up in our return area:\n\n${items.join('\n\n')}\n\n20/20 Auto Glass`;
+            const report = `These items are labeled and ready to be picked up in our return area:\n\n${items.join('\n')}\n\n20/20 Auto Glass`;
 
             const smsNumbers = vendorContacts[vendor]?.sms || '';
             const smsNumberList = Array.isArray(smsNumbers) ? smsNumbers.join(',') : smsNumbers;
