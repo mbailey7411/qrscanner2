@@ -135,6 +135,8 @@
             white-space: pre-wrap;
             word-break: break-word;
             line-height: 1.2; /* Adjusted for single spacing */
+            padding-left: 5px; /* Ensure consistent left padding */
+            margin: 0; /* Remove margin */
         }
 
         .remove-button {
@@ -202,11 +204,11 @@
     </div>
 
     <div id="inventorySection" class="inventory-section">
-        <h2>Audit Items</h2> <!-- Changed from "Inventory Items" to "Audit Items" -->
+        <h2>Audit Items</h2>
         <ul id="inventoryList"></ul>
         <div class="button-container">
-            <button id="inventoryEmailButton" class="email-button" aria-label="Email Audit Report">Email Audit Report</button> <!-- Updated label -->
-            <button id="inventorySmsButton" class="sms-button" aria-label="SMS Audit Report">SMS Audit Report</button> <!-- Updated label -->
+            <button id="inventoryEmailButton" class="email-button" aria-label="Email Audit Report">Email Audit Report</button>
+            <button id="inventorySmsButton" class="sms-button" aria-label="SMS Audit Report">SMS Audit Report</button>
         </div>
     </div>
 
@@ -326,6 +328,7 @@
             li.appendChild(itemContent);
             li.appendChild(removeButton);
 
+            // Append the list item to the correct section
             if (isReturn) {
                 const vendor = extractVendorFromReturnItem(item);
                 if (vendor && !vendorSections[vendor]) {
