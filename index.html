@@ -523,12 +523,17 @@ function sendInventoryEmailReport() {
 
 function sendInventorySmsReport() {
     const items = Array.from(inventoryList.children)
-        .map(li => li.querySelector('.item-content').textContent.trim());
+        .map(li => {
+            let content = li.querySelector('.item-content').textContent.trim();
+            content = content.split('\n').map(line => line.trim()).join('\n'); // Remove leading spaces from each line
+            return content;
+        });
 
-    const report = `Audit Items:\n\n${items.join('\n')}\n\n20/20 Auto Glass`;
+    const report = `Audit Items:\n\n${items.join('\n\n')}\n\n20/20 Auto Glass`;
 
     window.location.href = `sms:?body=${encodeURIComponent(report)}`;
 }
+
 
 function emailVendorReturns(vendor) {
     const items = Array.from(vendorSections[vendor].list.children)
