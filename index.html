@@ -297,6 +297,9 @@
             'Mygrant': { email: 'poliver@mygrantglass.com', sms: '7045176639' }
         };
 
+        window.addEventListener('load', initScanner);
+        window.addEventListener('beforeunload', stopScanning); // Stop the camera on unload
+
         stopButton.addEventListener('click', stopScanning);
         startButton.addEventListener('click', startScanning);
         emailReportButton.addEventListener('click', sendEmailReport);
@@ -310,8 +313,6 @@
         saveButton.addEventListener('click', () => {
             saveLocation();
         });
-
-        window.addEventListener('load', initScanner);
 
         function initScanner() {
             startScanning();
