@@ -20,6 +20,10 @@
             --vendor-other: #1abc9c;
         }
 
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Roboto', sans-serif;
             background-color: var(--background-color);
@@ -129,14 +133,14 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
+            padding-left: 15px;
         }
 
         .item-content {
             white-space: pre-wrap;
             word-break: break-word;
-            line-height: 1.2; /* Adjusted for single spacing */
-            padding-left: 5px; /* Ensure consistent left padding */
-            margin: 0; /* Remove margin */
+            line-height: 1.2; /* Ensure consistent line height */
+            margin: 0;
         }
 
         .remove-button {
