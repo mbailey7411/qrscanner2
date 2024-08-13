@@ -14,10 +14,6 @@
             --secondary-color: #2ecc71;
             --background-color: #ecf0f1;
             --text-color: #34495e;
-            --vendor-pgw: #e74c3c;
-            --vendor-pilkington: #f39c12;
-            --vendor-mygrant: #9b59b6;
-            --vendor-other: #1abc9c;
         }
 
         *, *::before, *::after {
@@ -134,14 +130,14 @@
             justify-content: space-between;
             align-items: flex-start;
             padding-left: 10px;
+            line-height: 1.4;
         }
 
         .item-content {
             white-space: pre-wrap;
             word-break: break-word;
-            line-height: 1.4; /* Match the line height */
             margin: 0;
-            padding-left: 10px; /* Ensure consistent padding */
+            padding-left: 10px;
         }
 
         .remove-button {
@@ -305,21 +301,21 @@
             const itemContent = document.createElement('span');
             itemContent.className = 'item-content';
 
+            // Apply same formatting for both audit items and return items
             if (isReturn) {
-                // Display the entire text for return items
-                itemContent.textContent = item;
+                itemContent.textContent = item; // Return item text
             } else {
-                // Parse and display the QR content for audit items
                 const itemDetails = parseQRContent(item);
-                const content = `
+                itemContent.innerHTML = `
                     <strong>Customer:</strong> ${itemDetails.CUSTOMER || 'N/A'}<br>
                     <strong>Part:</strong> ${itemDetails.PART || 'N/A'}<br>
                     <strong>Supplier:</strong> ${itemDetails.SUPPLIER || 'N/A'}<br>
                     <strong>Order:</strong> ${itemDetails.ORDER || 'N/A'}<br>
                     <strong>Labeled:</strong> ${itemDetails.LABELED || 'N/A'}
                 `;
-                itemContent.innerHTML = content;
             }
+
+            li.appendChild(itemContent);
 
             const removeButton = document.createElement('button');
             removeButton.textContent = 'Remove';
@@ -330,10 +326,8 @@
                 updateVendorSectionVisibility();
             };
 
-            li.appendChild(itemContent);
             li.appendChild(removeButton);
 
-            // Append the list item to the correct section
             if (isReturn) {
                 const vendor = extractVendorFromReturnItem(item);
                 if (vendor && !vendorSections[vendor]) {
