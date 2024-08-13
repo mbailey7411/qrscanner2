@@ -124,24 +124,32 @@
         #inventoryList li, .vendor-list li {
             background-color: white;
             margin-bottom: 10px;
-            padding: 8px 8px; /* Reduced padding to allow more text space */
+            padding: 8px 8px;
             border-radius: 5px;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            line-height: 1.2; /* Adjusted for single line spacing */
+            line-height: 1.2;
+            position: relative; /* Added to enable relative positioning for the location text */
         }
 
         .item-content {
-            white-space: normal; /* Default for audit items */
-            word-break: break-word; /* Prevent overflow */
+            white-space: normal;
+            word-break: break-word;
             margin: 0;
         }
 
         .return-item-content {
-            white-space: pre-wrap; /* Preserve whitespace and line breaks for return items */
-            word-break: break-word; /* Prevent overflow */
-            margin: 0; /* Ensure consistent margins */
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 0;
+        }
+
+        .location-text {
+            font-style: italic;
+            color: var(--secondary-color);
+            margin-top: 5px;
+            font-size: 14px;
         }
 
         .remove-button {
@@ -174,6 +182,35 @@
         @keyframes fadeInOut {
             0%, 100% { opacity: 0; }
             10%, 90% { opacity: 1; }
+        }
+
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4); 
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            width: 80%;
+            max-width: 400px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
         }
 
         @media (max-width: 600px) {
@@ -219,10 +256,23 @@
 
     <div id="notification">Item Scanned!</div>
 
+    <!-- Modal for location input -->
+    <div id="locationModal" class="modal">
+        <div class="modal-content">
+            <h2>Enter Item Location</h2>
+            <input type="text" id="locationInput" placeholder="Enter location">
+            <div class="modal-buttons">
+                <button id="skipButton" aria-label="Skip Location">Skip</button>
+                <button id="saveButton" aria-label="Save Location">Save</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const html5QrCode = new Html5Qrcode("qr-reader");
         const qrConfig = { fps: 10, qrbox: { width: 250, height: 250 } };
         let scanning = false;
+        let currentLiElement = null; // Variable to hold the current list item being edited
 
         const startButton = document.getElementById('startButton');
         const stopButton = document.getElementById('stopButton');
@@ -232,6 +282,11 @@
         const inventoryList = document.getElementById('inventoryList');
         const notification = document.getElementById('notification');
         const inventorySection = document.getElementById('inventorySection');
+
+        const locationModal = document.getElementById('locationModal');
+        const locationInput = document.getElementById('locationInput');
+        const skipButton = document.getElementById('skipButton');
+        const saveButton = document.getElementById('saveButton');
 
         const scannedItems = new Set();
         let audioContext;
@@ -247,6 +302,14 @@
         emailReportButton.addEventListener('click', sendEmailReport);
         inventoryEmailButton.addEventListener('click', sendInventoryEmailReport);
         inventorySmsButton.addEventListener('click', sendInventorySmsReport);
+
+        skipButton.addEventListener('click', () => {
+            closeModal();
+        });
+
+        saveButton.addEventListener('click', () => {
+            saveLocation();
+        });
 
         window.addEventListener('load', initScanner);
 
@@ -317,6 +380,7 @@
                     <strong>Order:</strong> ${itemDetails.ORDER || 'N/A'}<br>
                     <strong>Labeled:</strong> ${itemDetails.LABELED || 'N/A'}
                 `;
+                showModal(li); // Show modal for location input
             }
 
             li.appendChild(itemContent);
@@ -343,6 +407,28 @@
                 inventoryList.appendChild(li);
                 inventorySection.style.display = 'block';
             }
+        }
+
+        function showModal(li) {
+            currentLiElement = li; // Store reference to the current list item
+            locationInput.value = ''; // Clear the input field
+            locationModal.style.display = 'flex'; // Show the modal
+        }
+
+        function closeModal() {
+            locationModal.style.display = 'none'; // Hide the modal
+            currentLiElement = null; // Clear the reference to the current list item
+        }
+
+        function saveLocation() {
+            const location = locationInput.value.trim();
+            if (location && currentLiElement) {
+                const locationText = document.createElement('div');
+                locationText.className = 'location-text';
+                locationText.textContent = `Location: ${location}`;
+                currentLiElement.appendChild(locationText);
+            }
+            closeModal(); // Close the modal
         }
 
         function parseQRContent(content) {
