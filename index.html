@@ -292,15 +292,27 @@
         }
 
         function addItemToList(item) {
-            const lines = item.split('\n');
-            const firstLine = lines[0].trim();
-            const isReturn = firstLine.includes('Return');
-            let vendor = isReturn ? firstLine.split(' ')[0] : null;
+            const isReturn = item.includes('Return');
 
             const li = document.createElement('li');
             const itemContent = document.createElement('span');
             itemContent.className = 'item-content';
-            itemContent.innerHTML = lines.map(line => `<strong>${line.split('=')[0]}:</strong> ${line.split('=')[1] || ''}`).join('<br>');
+
+            if (isReturn) {
+                // Display the entire text for return items
+                itemContent.textContent = item;
+            } else {
+                // Parse and display the QR content for audit items
+                const itemDetails = parseQRContent(item);
+                const content = `
+                    <strong>Customer:</strong> ${itemDetails.CUSTOMER || 'N/A'}<br>
+                    <strong>Part:</strong> ${itemDetails.PART || 'N/A'}<br>
+                    <strong>Supplier:</strong> ${itemDetails.SUPPLIER || 'N/A'}<br>
+                    <strong>Order:</strong> ${itemDetails.ORDER || 'N/A'}<br>
+                    <strong>Labeled:</strong> ${itemDetails.LABELED || 'N/A'}
+                `;
+                itemContent.innerHTML = content;
+            }
 
             const removeButton = document.createElement('button');
             removeButton.textContent = 'Remove';
@@ -314,8 +326,9 @@
             li.appendChild(itemContent);
             li.appendChild(removeButton);
 
-            if (isReturn && vendor) {
-                if (!vendorSections[vendor]) {
+            if (isReturn) {
+                const vendor = extractVendorFromReturnItem(item);
+                if (vendor && !vendorSections[vendor]) {
                     createVendorSection(vendor);
                 }
                 vendorSections[vendor].list.appendChild(li);
@@ -324,6 +337,21 @@
                 inventoryList.appendChild(li);
                 inventorySection.style.display = 'block';
             }
+        }
+
+        function parseQRContent(content) {
+            const details = {};
+            content.split(';').forEach(pair => {
+                const [key, value] = pair.split('=');
+                details[key.trim()] = value ? value.trim() : '';
+            });
+            return details;
+        }
+
+        function extractVendorFromReturnItem(item) {
+            const lines = item.split('\n');
+            const firstLine = lines[0].trim();
+            return firstLine.split(' ')[0];
         }
 
         function createVendorSection(vendor) {
@@ -474,4 +502,4 @@
         }
     </script>
 </body>
-</html> 
+</html>
