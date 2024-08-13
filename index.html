@@ -500,7 +500,7 @@
                 if (vendorSections[vendor].list.children.length > 0) {
                     report += `\n\n${vendor} Returns:\n\n`;
                     report += Array.from(vendorSections[vendor].list.children)
-                        .map(li => li.querySelector('.return-item-content').textContent.trim())
+                        .map(li => li.querySelector('.return-item-content').innerHTML.trim().replace(/<br>/g, '\n'))
                         .join('\n\n');
             }
         }
@@ -510,85 +510,84 @@
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
 }
 
+function sendInventoryEmailReport() {
+    const items = Array.from(inventoryList.children)
+        .map(li => li.querySelector('.item-content').textContent.trim());
 
-        function sendInventoryEmailReport() {
-            const items = Array.from(inventoryList.children)
-                .map(li => li.querySelector('.item-content').textContent.trim());
+    const report = `Audit Items:\n\n${items.join('\n\n')}\n\n20/20 Auto Glass`;
 
-            const report = `Audit Items:\n\n${items.join('\n\n')}\n\n20/20 Auto Glass`;
+    const subject = encodeURIComponent('Audit Report');
+    const body = encodeURIComponent(report);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
 
-            const subject = encodeURIComponent('Audit Report');
-            const body = encodeURIComponent(report);
-            window.location.href = `mailto:?subject=${subject}&body=${body}`;
-        }
+function sendInventorySmsReport() {
+    const items = Array.from(inventoryList.children)
+        .map(li => li.querySelector('.item-content').textContent.trim());
 
-        function sendInventorySmsReport() {
-            const items = Array.from(inventoryList.children)
-                .map(li => li.querySelector('.item-content').textContent.trim());
+    const report = `Audit Items:\n\n${items.join('\n')}\n\n20/20 Auto Glass`;
 
-            const report = `Audit Items:\n\n${items.join('\n')}\n\n20/20 Auto Glass`;
+    window.location.href = `sms:?body=${encodeURIComponent(report)}`;
+}
 
-            window.location.href = `sms:?body=${encodeURIComponent(report)}`;
-        }
+function emailVendorReturns(vendor) {
+    const items = Array.from(vendorSections[vendor].list.children)
+        .map(li => li.querySelector('.return-item-content').innerHTML.trim().replace(/<br>/g, '\n'));
 
-        function emailVendorReturns(vendor) {
-            const items = Array.from(vendorSections[vendor].list.children)
-                .map(li => li.querySelector('.return-item-content').textContent.trim());
+    const report = `These items are labeled and ready to be picked up in our return area:\n\n${items.join('\n\n')}\n\n20/20 Auto Glass`;
 
-            const report = `These items are labeled and ready to be picked up in our return area:\n\n${items.join('\n\n')}\n\n20/20 Auto Glass`;
+    const subject = encodeURIComponent(`${vendor} Returns`);
+    const body = encodeURIComponent(report);
+    let email = vendorContacts[vendor]?.email || '';
+    let ccEmail = '';
 
-            const subject = encodeURIComponent(`${vendor} Returns`);
-            const body = encodeURIComponent(report);
-            let email = vendorContacts[vendor]?.email || '';
-            let ccEmail = '';
+    if (Array.isArray(email)) {
+        ccEmail = `&cc=${encodeURIComponent(email[1])}`;
+        email = email[0];
+    }
 
-            if (Array.isArray(email)) {
-                ccEmail = `&cc=${encodeURIComponent(email[1])}`;
-                email = email[0];
-            }
+    window.location.href = `mailto:${email}?subject=${subject}&body=${body}${ccEmail}`;
+}
 
-            window.location.href = `mailto:${email}?subject=${subject}&body=${body}${ccEmail}`;
-        }
+function smsVendorReturns(vendor) {
+    const items = Array.from(vendorSections[vendor].list.children)
+        .map(li => li.querySelector('.return-item-content').innerHTML.trim().replace(/<br>/g, '\n'));
 
-        function smsVendorReturns(vendor) {
-            const items = Array.from(vendorSections[vendor].list.children)
-                .map(li => li.querySelector('.return-item-content').textContent.trim());
+    const report = `These items are labeled and ready to be picked up in our return area:\n\n${items.join('\n')}\n\n20/20 Auto Glass`;
 
-            const report = `These items are labeled and ready to be picked up in our return area:\n\n${items.join('\n')}\n\n20/20 Auto Glass`;
+    const smsNumbers = vendorContacts[vendor]?.sms || '';
+    const smsNumberList = Array.isArray(smsNumbers) ? smsNumbers.join(',') : smsNumbers;
 
-            const smsNumbers = vendorContacts[vendor]?.sms || '';
-            const smsNumberList = Array.isArray(smsNumbers) ? smsNumbers.join(',') : smsNumbers;
+    window.location.href = `sms:${smsNumberList}?body=${encodeURIComponent(report)}`;
+}
 
-            window.location.href = `sms:${smsNumberList}?body=${encodeURIComponent(report)}`;
-        }
+function initAudio() {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+}
 
-        function initAudio() {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
+function playBeep() {
+    if (!audioContext) initAudio();
 
-        function playBeep() {
-            if (!audioContext) initAudio();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
 
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
 
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
 
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-            gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.1);
+}
 
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.1);
-        }
-
-        function showNotification() {
-            notification.style.display = 'block';
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 2000);
-        }
+function showNotification() {
+    notification.style.display = 'block';
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 2000);
+}
     </script>
 </body>
 </html>
