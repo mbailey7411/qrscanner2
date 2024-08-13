@@ -127,10 +127,9 @@
             padding: 8px 8px;
             border-radius: 5px;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column; /* Ensure vertical stacking */
             align-items: flex-start;
             line-height: 1.2;
-            position: relative; /* Added to enable relative positioning for the location text */
         }
 
         .item-content {
@@ -153,13 +152,14 @@
         }
 
         .remove-button {
+            align-self: flex-end; /* Align the remove button to the right */
             background-color: #e74c3c;
             color: white;
             border: none;
             padding: 5px 10px;
             border-radius: 3px;
             cursor: pointer;
-            margin-left: 10px;
+            margin-top: 10px; /* Add margin to separate from content */
         }
 
         .vendor-button-container {
@@ -380,10 +380,11 @@
                     <strong>Order:</strong> ${itemDetails.ORDER || 'N/A'}<br>
                     <strong>Labeled:</strong> ${itemDetails.LABELED || 'N/A'}
                 `;
+                li.appendChild(itemContent);
+                inventoryList.appendChild(li);
+                inventorySection.style.display = 'block';
                 showModal(li); // Show modal for location input
             }
-
-            li.appendChild(itemContent);
 
             const removeButton = document.createElement('button');
             removeButton.textContent = 'Remove';
@@ -403,9 +404,6 @@
                 }
                 vendorSections[vendor].list.appendChild(li);
                 vendorSections[vendor].section.style.display = 'block';
-            } else {
-                inventoryList.appendChild(li);
-                inventorySection.style.display = 'block';
             }
         }
 
@@ -426,7 +424,7 @@
                 const locationText = document.createElement('div');
                 locationText.className = 'location-text';
                 locationText.textContent = `Location: ${location}`;
-                currentLiElement.appendChild(locationText);
+                currentLiElement.querySelector('.item-content').appendChild(locationText);
             }
             closeModal(); // Close the modal
         }
