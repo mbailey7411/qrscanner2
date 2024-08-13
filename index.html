@@ -132,11 +132,17 @@
             line-height: 1.2; /* Adjusted for single line spacing */
         }
 
-.item-content {
-    white-space: pre-wrap; /* Preserve whitespace and line breaks */
-    word-break: break-word; /* Prevent overflow */
-    margin: 0;
-}
+        .item-content {
+            white-space: normal; /* Default for audit items */
+            word-break: break-word; /* Prevent overflow */
+            margin: 0;
+        }
+
+        .return-item-content {
+            white-space: pre-wrap; /* Preserve whitespace and line breaks for return items */
+            word-break: break-word; /* Prevent overflow */
+            margin: 0; /* Ensure consistent margins */
+        }
 
         .remove-button {
             background-color: #e74c3c;
@@ -292,51 +298,52 @@
             console.warn(`QR error: ${error}`);
         }
 
-function addItemToList(item) {
-    const isReturn = item.includes('Return');
+        function addItemToList(item) {
+            const isReturn = item.includes('Return');
 
-    const li = document.createElement('li');
-    const itemContent = document.createElement('span');
-    itemContent.className = 'item-content';
+            const li = document.createElement('li');
+            const itemContent = document.createElement('span');
 
-    if (isReturn) {
-        itemContent.innerHTML = item.replace(/\n/g, '<br>'); // Preserve line breaks
-    } else {
-        const itemDetails = parseQRContent(item);
-        itemContent.innerHTML = `
-            <strong>Customer:</strong> ${itemDetails.CUSTOMER || 'N/A'}<br>
-            <strong>Part:</strong> ${itemDetails.PART || 'N/A'}<br>
-            <strong>Supplier:</strong> ${itemDetails.SUPPLIER || 'N/A'}<br>
-            <strong>Order:</strong> ${itemDetails.ORDER || 'N/A'}<br>
-            <strong>Labeled:</strong> ${itemDetails.LABELED || 'N/A'}
-        `;
-    }
+            if (isReturn) {
+                itemContent.className = 'return-item-content';
+                itemContent.innerHTML = item.replace(/\n/g, '<br>'); // Preserve line breaks
+            } else {
+                itemContent.className = 'item-content';
+                const itemDetails = parseQRContent(item);
+                itemContent.innerHTML = `
+                    <strong>Customer:</strong> ${itemDetails.CUSTOMER || 'N/A'}<br>
+                    <strong>Part:</strong> ${itemDetails.PART || 'N/A'}<br>
+                    <strong>Supplier:</strong> ${itemDetails.SUPPLIER || 'N/A'}<br>
+                    <strong>Order:</strong> ${itemDetails.ORDER || 'N/A'}<br>
+                    <strong>Labeled:</strong> ${itemDetails.LABELED || 'N/A'}
+                `;
+            }
 
-    li.appendChild(itemContent);
+            li.appendChild(itemContent);
 
-    const removeButton = document.createElement('button');
-    removeButton.textContent = 'Remove';
-    removeButton.className = 'remove-button';
-    removeButton.onclick = () => {
-        li.remove();
-        scannedItems.delete(item);
-        updateVendorSectionVisibility();
-    };
+            const removeButton = document.createElement('button');
+            removeButton.textContent = 'Remove';
+            removeButton.className = 'remove-button';
+            removeButton.onclick = () => {
+                li.remove();
+                scannedItems.delete(item);
+                updateVendorSectionVisibility();
+            };
 
-    li.appendChild(removeButton);
+            li.appendChild(removeButton);
 
-    if (isReturn) {
-        const vendor = extractVendorFromReturnItem(item);
-        if (vendor && !vendorSections[vendor]) {
-            createVendorSection(vendor);
+            if (isReturn) {
+                const vendor = extractVendorFromReturnItem(item);
+                if (vendor && !vendorSections[vendor]) {
+                    createVendorSection(vendor);
+                }
+                vendorSections[vendor].list.appendChild(li);
+                vendorSections[vendor].section.style.display = 'block';
+            } else {
+                inventoryList.appendChild(li);
+                inventorySection.style.display = 'block';
+            }
         }
-        vendorSections[vendor].list.appendChild(li);
-        vendorSections[vendor].section.style.display = 'block';
-    } else {
-        inventoryList.appendChild(li);
-        inventorySection.style.display = 'block';
-    }
-}
 
         function parseQRContent(content) {
             const details = {};
